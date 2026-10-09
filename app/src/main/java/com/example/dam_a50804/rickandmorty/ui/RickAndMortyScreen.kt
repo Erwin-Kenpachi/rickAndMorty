@@ -44,6 +44,7 @@ fun RickAndMortyScreen(modifier: Modifier = Modifier, viewModel: RickAndMortyVie
         Spacer(modifier = Modifier.height(8.dp))
         ResultsCounter(
             totalResults = state.totalResults,
+            loadedResults = state.loadedResults,
             category = state.selectedCategory
         )
         Spacer(modifier = Modifier.height(24.dp))
@@ -120,10 +121,10 @@ fun SearchBar(query: String, onQueryChanged: (String) -> Unit) {
 }
 
 @Composable
-fun ResultsCounter(totalResults: Int, category: Category) {
+fun ResultsCounter(totalResults: Int, loadedResults: Int, category: Category) {
     val catName = category.name.lowercase().replaceFirstChar { it.uppercase() }
     Text(
-        text = "Total $catName in API: $totalResults | Retrieved in current view: 1 item",
+        text = "Total $catName in API: $totalResults | Retrieved in current view: $loadedResults item(s)",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )

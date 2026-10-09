@@ -30,6 +30,7 @@ data class RickAndMortyState(
     val selectedCategory: Category = Category.CHARACTER,
     val searchQuery: String = "",
     val totalResults: Int = 0,
+    val loadedResults: Int = 0,
     val uiState: UiState = UiState.Loading
 )
 
@@ -63,9 +64,9 @@ class RickAndMortyViewModel : ViewModel() {
 
     fun rollRandomItem() {
         val currentState = _state.value
-        val query = currentState.searchQuery
+        val query = currentState.searchQuery //verifca se o persoangem tem algo na query do user
         
-        _state.update { it.copy(uiState = UiState.Loading) }
+        _state.update { it.copy(uiState = UiState.Loading, loadedResults = 0) }
 
         viewModelScope.launch {
             when (currentState.selectedCategory) {
@@ -95,8 +96,9 @@ class RickAndMortyViewModel : ViewModel() {
             
             targetRes.onSuccess { targetResponse ->
                 val item = targetResponse.results.getOrNull(itemIndexInPage)
+                val loadedCount = targetResponse.results.size
                 if (item != null) {
-                    _state.update { it.copy(totalResults = total, uiState = UiState.Success(item)) }
+                    _state.update { it.copy(totalResults = total, loadedResults = loadedCount, uiState = UiState.Success(item)) }
                 } else {
                     _state.update { it.copy(uiState = UiState.Error("Failed to extract character")) }
                 }
@@ -129,8 +131,9 @@ class RickAndMortyViewModel : ViewModel() {
             
             targetRes.onSuccess { targetResponse ->
                 val item = targetResponse.results.getOrNull(itemIndexInPage)
+                val loadedCount = targetResponse.results.size
                 if (item != null) {
-                    _state.update { it.copy(totalResults = total, uiState = UiState.Success(item)) }
+                    _state.update { it.copy(totalResults = total, loadedResults = loadedCount, uiState = UiState.Success(item)) }
                 } else {
                     _state.update { it.copy(uiState = UiState.Error("Failed to extract episode")) }
                 }
@@ -163,8 +166,9 @@ class RickAndMortyViewModel : ViewModel() {
             
             targetRes.onSuccess { targetResponse ->
                 val item = targetResponse.results.getOrNull(itemIndexInPage)
+                val loadedCount = targetResponse.results.size
                 if (item != null) {
-                    _state.update { it.copy(totalResults = total, uiState = UiState.Success(item)) }
+                    _state.update { it.copy(totalResults = total, loadedResults = loadedCount, uiState = UiState.Success(item)) }
                 } else {
                     _state.update { it.copy(uiState = UiState.Error("Failed to extract location")) }
                 }
