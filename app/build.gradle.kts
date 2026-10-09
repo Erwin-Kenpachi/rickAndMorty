@@ -5,11 +5,8 @@ plugins {
 
 android {
     namespace = "com.example.dam_a50804.rickandmorty"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.example.dam_a50804.rickandmorty"
