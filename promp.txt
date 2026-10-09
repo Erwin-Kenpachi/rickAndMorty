@@ -1,0 +1,268 @@
+# Projeto: Rick and Morty Random Explorer
+
+Desenvolve uma aplicação Android em **Kotlin com Jetpack Compose**, baseada na API pública do Rick and Morty: https://rickandmortyapi.com/api/
+
+A aplicação deve seguir a arquitetura **MVVM (Model-View-ViewModel)**, utilizar boas práticas de desenvolvimento Android e ter uma interface moderna, intuitiva e visualmente apelativa.
+
+## IMPORTANTE: Desenvolvimento dividido em duas fases
+
+O projeto deve ser desenvolvido em duas fases distintas.
+
+**Nesta primeira fase, implementa exclusivamente a interface gráfica e os componentes necessários para demonstrar o funcionamento da aplicação com dados fictícios. NÃO implementes ainda o Retrofit, as chamadas HTTP ou a integração com a API.**
+
+Quero primeiro executar a aplicação, avaliar o design e pedir alterações, se necessário. Só avançaremos para a segunda fase depois da minha aprovação explícita.
+
+Antes de começares, analisa a estrutura atual do projeto e respeita as configurações existentes. Não substituas configurações ou dependências desnecessariamente.
+
+# FASE 1 — Interface gráfica e experiência de utilização
+
+## 1. MainActivity.kt
+
+* Deve ser o ponto de entrada da aplicação.
+* Inicializar o tema e o ecrã principal.
+* Utilizar Jetpack Compose e Material 3.
+* Manter o código organizado, evitando colocar toda a interface dentro da MainActivity.
+
+## 2. Ecrã principal — RickAndMortyScreen.kt
+
+Cria um ecrã principal com um design moderno inspirado no universo de Rick and Morty.
+
+A interface deve incluir:
+
+### A. Cabeçalho
+
+* Título da aplicação: "Rick & Morty Explorer".
+* Subtítulo curto que explique a funcionalidade de explorar e sortear personagens, episódios e localizações.
+* Uma identidade visual coerente com o universo da série, sem sobrecarregar a interface.
+
+### B. Seleção de categoria
+
+Apresenta três botões para alternar entre:
+
+* Character
+* Episode
+* Location
+
+Podes utilizar uma Row com três botões ou um componente Material 3 equivalente, como um SingleChoiceSegmentedButtonRow, se estiver disponível na versão das dependências do projeto.
+
+A categoria selecionada deve estar claramente identificada visualmente.
+
+### C. Campo de pesquisa
+
+* Utiliza um OutlinedTextField para pesquisar por nome.
+* A pesquisa deve atualizar dinamicamente os resultados apresentados.
+* Inclui um ícone de pesquisa e uma opção para limpar o texto.
+* A pesquisa deve funcionar independentemente da categoria selecionada.
+
+Na primeira fase, simula a pesquisa localmente utilizando os dados fictícios disponíveis.
+
+### D. Contador de resultados
+
+Apresenta o número total de resultados correspondentes à categoria e ao filtro atual.
+
+Exemplo: "Total Characters in API: 68" e "Retrieved in current view: 20 items".
+
+Na primeira fase, utiliza valores calculados a partir dos dados fictícios. Na segunda fase, apresenta separadamente:
+
+* O número total de resultados indicado pela API.
+* O número de elementos efetivamente carregados na aplicação.
+
+Não confundas o total de resultados da pesquisa com o número de elementos carregados na página atual.
+
+### E. Cartão do elemento selecionado
+
+Apresenta um cartão visualmente apelativo com os dados de um elemento selecionado aleatoriamente da lista atual.
+
+O cartão deve adaptar o seu conteúdo à categoria selecionada.
+
+**Character:**
+
+* Imagem da personagem.
+* Nome.
+* Status.
+* Species.
+
+**Episode:**
+
+* Nome do episódio.
+* Código do episódio, por exemplo, S01E01.
+* Air date.
+* Uma apresentação visual adequada à categoria, sem exigir uma imagem inexistente na API.
+
+**Location:**
+
+* Nome da localização.
+* Type.
+* Dimension.
+* Uma apresentação visual adequada à categoria.
+
+Utiliza componentes reutilizáveis e evita duplicar desnecessariamente a estrutura da interface.
+
+### F. Botão Roll — comportamento obrigatório
+
+O botão Roll é uma das funcionalidades principais da aplicação. Deve permitir sortear e apresentar outro elemento aleatório, atualizando o cartão apresentado no ecrã.
+
+Implementa o seguinte comportamento:
+
+1. **Ao abrir a aplicação:** deve ser selecionado e apresentado automaticamente um elemento aleatório da categoria inicial, sem o utilizador ter de carregar no botão Roll.
+2. **Ao carregar em Roll:** seleciona aleatoriamente outro elemento dos resultados disponíveis para a categoria e pesquisa atuais.
+3. **Atualização do cartão:** depois do sorteio, atualiza o cartão com os dados do novo elemento, incluindo a imagem, o nome e os dois campos específicos da categoria.
+4. **Evitar repetições consecutivas:** se existirem pelo menos dois elementos disponíveis, o Roll deve escolher um elemento diferente do atualmente apresentado, sempre que possível.
+5. **Respeitar a pesquisa:** se o utilizador pesquisar por um nome, o Roll só pode escolher entre os elementos que correspondam ao filtro atual.
+6. **Respeitar a categoria:** o Roll nunca deve apresentar um elemento de outra categoria.
+7. **Mudança de categoria:** ao selecionar Character, Episode ou Location, atualiza os resultados e seleciona automaticamente um elemento aleatório da nova categoria, se existirem resultados.
+8. **Alteração da pesquisa:** quando o filtro muda, atualiza os resultados e seleciona um elemento aleatório entre os resultados correspondentes. Se não houver resultados, não mantenhas no cartão um elemento que já não corresponde à pesquisa.
+9. **Apenas um resultado:** se existir apenas um elemento correspondente, apresenta esse elemento. O botão Roll não deve falhar nem produzir resultados inválidos.
+10. **Sem resultados:** se a lista estiver vazia, desativa o botão Roll e apresenta uma mensagem clara, como "No results found".
+11. **Feedback visual:** o botão deve ter o texto "Roll" ou "Roll Random Item", acompanhado de um ícone adequado, e apresentar estados visuais coerentes com a sua disponibilidade.
+
+A lógica de seleção aleatória deve estar no ViewModel, nunca diretamente no componente visual.
+
+Nesta primeira fase, o Roll funciona com os dados fictícios. Na segunda fase, deve funcionar com os dados reais obtidos através da API.
+
+### G. Estados da interface
+
+Prepara a interface para representar os seguintes estados:
+
+* Loading: indicador de carregamento.
+* Success: apresentação do elemento selecionado e das estatísticas.
+* Empty: mensagem quando não existem resultados.
+* Error: mensagem de erro com uma opção para tentar novamente.
+
+Na primeira fase, estes estados podem ser simulados. Não implementes ainda operações de rede.
+
+## 3. ViewModel — RickAndMortyViewModel.kt
+
+Cria a estrutura necessária para gerir o estado da interface de acordo com os princípios de MVVM.
+
+O ViewModel deve gerir:
+
+* Categoria selecionada.
+* Texto de pesquisa.
+* Lista de elementos fictícios da categoria atual.
+* Lista de elementos correspondentes à pesquisa atual.
+* Elemento atualmente selecionado.
+* Total de resultados correspondentes ao filtro.
+* Estado da interface: Loading, Success, Empty ou Error.
+
+Utiliza StateFlow e uma UiState imutável, sempre que adequado.
+
+A View deve observar o estado do ViewModel e comunicar as ações do utilizador através de funções apropriadas.
+
+Mantém a lógica de filtragem, atualização de resultados e seleção aleatória fora dos componentes visuais.
+
+Garante que a alteração da categoria ou do filtro atualiza corretamente o elemento selecionado e que o cartão nunca apresenta dados incompatíveis com a categoria ou pesquisa selecionadas.
+
+## 4. Dados fictícios
+
+Cria dados fictícios suficientes para demonstrar a aplicação nas três categorias.
+
+Inclui vários exemplos de personagens, episódios e localizações, com nomes e propriedades plausíveis do universo de Rick and Morty.
+
+Para as personagens, utiliza imagens de demonstração apenas se estiverem disponíveis localmente ou através de recursos já existentes no projeto. Não implementes ainda carregamento de imagens através da API.
+
+A aplicação deve funcionar e ser testável sem ligação à Internet.
+
+## 5. Design e qualidade
+
+* Utiliza Material 3 e componentes Jetpack Compose.
+* Cria uma interface consistente, com boa hierarquia visual, espaçamento adequado, tipografia legível e cartões bem organizados.
+* Escolhe uma paleta de cores inspirada na série, mantendo o contraste e a legibilidade.
+* Organiza o ecrã com uma disposição semelhante à referência fornecida: cabeçalho, seleção de categoria, pesquisa, estatísticas, cartão do elemento e botão Roll.
+* Garante que o ecrã funciona em diferentes dimensões de dispositivos Android.
+* Evita código duplicado e funções excessivamente grandes.
+* Mantém uma separação clara entre UI, estado e lógica de apresentação.
+* Não acrescentes funcionalidades que não foram pedidas sem me consultares primeiro.
+
+## 6. Critérios de conclusão da primeira fase
+
+Antes de terminares:
+
+1. Implementa todos os componentes descritos.
+2. Confirma que o projeto compila.
+3. Corrige os erros de compilação introduzidos pelas alterações.
+4. Verifica a mudança entre as três categorias.
+5. Verifica a filtragem e o contador de resultados.
+6. Confirma que a aplicação apresenta automaticamente um elemento aleatório ao iniciar.
+7. Testa o botão Roll várias vezes e confirma que atualiza o cartão para outro elemento elegível.
+8. Confirma que o Roll respeita o filtro, a categoria e os casos com zero ou um resultado.
+9. Verifica os estados vazios e os restantes estados da interface.
+10. Apresenta um resumo dos ficheiros criados ou alterados e de como testar a aplicação.
+
+**Para nesta fase depois de concluíres a interface. Não instales nem implementes Retrofit, não cries chamadas à API e não avances para a segunda fase sem a minha autorização.**
+
+# FASE 2 — Integração com a API
+
+Esta fase só começa quando eu aprovar explicitamente a interface da primeira fase.
+
+Nessa altura, substitui os dados fictícios pelos dados reais da API pública do Rick and Morty.
+
+## 1. Retrofit e serviço da API
+
+Implementa:
+
+* Retrofit para pedidos HTTP.
+* Um conversor JSON compatível com kotlinx.serialization.
+* RickAndMortyApiService.kt.
+* RetrofitClient.kt.
+* Endpoints para characters, episodes e locations.
+* Parâmetros de consulta dinâmicos, incluindo name e page.
+* Tratamento adequado dos erros HTTP e de rede.
+
+Base URL: https://rickandmortyapi.com/api/
+
+## 2. Modelos de dados
+
+Cria data classes Kotlin anotadas com @Serializable para representar as respostas JSON.
+
+Inclui os modelos necessários para:
+
+* ApiResponse e informação de paginação.
+* Character.
+* Episode.
+* Location.
+* Info e quaisquer outros objetos auxiliares necessários.
+
+Tem em conta que as respostas das três categorias possuem propriedades diferentes. Não forces os três tipos a utilizar um único modelo de dados incompatível.
+
+## 3. Integração com MVVM
+
+Cria uma camada de repositório para separar o acesso à API do ViewModel.
+
+O fluxo pretendido é:
+
+UI → ViewModel → Repository → Retrofit API Service.
+
+O ViewModel deve gerir os pedidos, o estado de carregamento, os resultados, os erros e as alterações de categoria ou pesquisa.
+
+Utiliza coroutines e StateFlow para atualizar a interface de forma reativa.
+
+## 4. Pesquisa, paginação e sorteio
+
+* A pesquisa por nome deve utilizar o endpoint apropriado da categoria selecionada.
+* Evita efetuar um pedido à API a cada tecla sem qualquer controlo; utiliza debounce quando apropriado.
+* Implementa a paginação de acordo com a estrutura de respostas da API.
+* O contador deve distinguir claramente os resultados totais encontrados do número de elementos carregados.
+* Ao abrir a aplicação, carrega os resultados da categoria inicial e apresenta automaticamente um elemento aleatório.
+* Ao mudar de categoria ou alterar o filtro de pesquisa, atualiza os resultados e escolhe um elemento aleatório que corresponda aos novos critérios.
+* O botão Roll deve selecionar outro elemento aleatório, diferente do atual sempre que possível, respeitando sempre a categoria e o filtro de pesquisa.
+* Se houver zero resultados, apresenta o estado Empty e impede o sorteio.
+* Se houver apenas um resultado, mantém esse resultado sem provocar erros.
+* **Tem em consideração a paginação:** o sorteio não deve ficar limitado inadvertidamente à primeira página se o objetivo for escolher entre todos os resultados correspondentes à pesquisa. Analisa a solução mais adequada para selecionar um resultado aleatório entre os resultados totais da API, sem carregar desnecessariamente todos os elementos.
+* Trata corretamente pesquisas sem resultados, erros de rede e respostas inválidas.
+* Para imagens de personagens, utiliza uma solução compatível com Jetpack Compose, como Coil, caso seja necessária uma nova dependência.
+
+## 5. Critérios de conclusão da segunda fase
+
+* A aplicação utiliza dados reais.
+* A pesquisa funciona nas três categorias.
+* O contador reflete corretamente a informação devolvida pela API.
+* A aplicação apresenta um elemento aleatório ao iniciar.
+* O botão Roll atualiza efetivamente o elemento apresentado.
+* O sorteio respeita a categoria e a pesquisa atuais.
+* A interface aprovada é preservada.
+* Os estados de Loading, Success, Empty e Error funcionam corretamente.
+* A arquitetura permanece organizada e testável.
+* O projeto compila e os erros introduzidos pela integração são corrigidos.
+
+Não avances para funcionalidades adicionais fora deste âmbito sem me consultares.
