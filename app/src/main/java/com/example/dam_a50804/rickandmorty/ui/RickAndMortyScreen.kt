@@ -12,9 +12,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.dam_a50804.rickandmorty.model.Character
-import com.example.dam_a50804.rickandmorty.model.Episode
-import com.example.dam_a50804.rickandmorty.model.Location
+import coil.compose.AsyncImage
+import com.example.dam_a50804.rickandmorty.model.CharacterDto
+import com.example.dam_a50804.rickandmorty.model.EpisodeDto
+import com.example.dam_a50804.rickandmorty.model.LocationDto
 import com.example.dam_a50804.rickandmorty.viewmodel.Category
 import com.example.dam_a50804.rickandmorty.viewmodel.RickAndMortyViewModel
 import com.example.dam_a50804.rickandmorty.viewmodel.UiState
@@ -122,7 +123,7 @@ fun SearchBar(query: String, onQueryChanged: (String) -> Unit) {
 fun ResultsCounter(totalResults: Int, category: Category) {
     val catName = category.name.lowercase().replaceFirstChar { it.uppercase() }
     Text(
-        text = "Total $catName in API (Mock): $totalResults | Retrieved in current view: 1 item",
+        text = "Total $catName in API: $totalResults | Retrieved in current view: 1 item",
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant
     )
@@ -142,27 +143,25 @@ fun ItemCard(item: Any) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             when (item) {
-                is Character -> {
-                    // Placeholder for image
-                    Box(
+                is CharacterDto -> {
+                    AsyncImage(
+                        model = item.image,
+                        contentDescription = item.name,
                         modifier = Modifier
                             .size(120.dp)
-                            .padding(8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("IMG")
-                    }
+                            .padding(8.dp)
+                    )
                     Text(text = item.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     Text(text = "Status: ${item.status}")
                     Text(text = "Species: ${item.species}")
                 }
-                is Episode -> {
+                is EpisodeDto -> {
                     Text(text = item.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(text = "Code: ${item.episodeCode}")
                     Text(text = "Air Date: ${item.airDate}")
                 }
-                is Location -> {
+                is LocationDto -> {
                     Text(text = item.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(text = "Type: ${item.type}")
