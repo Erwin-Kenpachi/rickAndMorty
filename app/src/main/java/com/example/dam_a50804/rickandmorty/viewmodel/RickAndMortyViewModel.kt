@@ -2,8 +2,6 @@ package com.example.dam_a50804.rickandmorty.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.dam_a50804.rickandmorty.model.EpisodeDto
-import com.example.dam_a50804.rickandmorty.model.LocationDto
 import com.example.dam_a50804.rickandmorty.repository.RickAndMortyRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -12,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 import kotlin.random.Random
 
 enum class Category {
@@ -31,7 +30,9 @@ data class RickAndMortyState(
     val totalResults: Int = 0,
     val loadedResults: Int = 0,
     val uiState: UiState = UiState.Loading
-)
+) {
+    val retrievedCount: Int get() = loadedResults
+}
 
 class RickAndMortyViewModel : ViewModel() {
 
@@ -63,7 +64,7 @@ class RickAndMortyViewModel : ViewModel() {
 
     fun rollRandomItem() {
         val currentState = _state.value
-        val query = currentState.searchQuery //verifca se o persoangem tem algo na query do user
+        val query = currentState.searchQuery
         
         _state.update { it.copy(uiState = UiState.Loading, loadedResults = 0) }
 
@@ -72,113 +73,133 @@ class RickAndMortyViewModel : ViewModel() {
                 Category.CHARACTER -> fetchRandomCharacter(query)
                 Category.EPISODE -> fetchRandomEpisode(query)
                 Category.LOCATION -> fetchRandomLocation(query)
+
             }
         }
     }
 
     private suspend fun fetchRandomCharacter(query: String) {
-        val initialRes = repository.getCharacters(query, 1)
-        initialRes.onSuccess { response ->
-            val total = response.info.count
-            if (total == 0) {
-                _state.update { it.copy(totalResults = 0, uiState = UiState.Empty) }
-                return@onSuccess
+        try {
+            val initialResponse = repository.getCharacters(query, 1)
+            val total = initialResponse.info.count
+            if (total == 0 || initialResponse.results.isEmpty()) {
+                _state.update { it.copy(totalResults = 0, loadedResults = 0, uiState = UiState.Empty) }
+                return
             }
-            
-            // Random index from 0 to total - 1
+
             val randomIndex = Random.nextInt(total)
-            // 20 items per page
             val targetPage = (randomIndex / 20) + 1
             val itemIndexInPage = randomIndex % 20
 
-            val targetRes = if (targetPage == 1) initialRes else repository.getCharacters(query, targetPage)
-            
-            targetRes.onSuccess { targetResponse ->
-                val item = targetResponse.results.getOrNull(itemIndexInPage)
-                val loadedCount = targetResponse.results.size
-                if (item != null) {
-                    _state.update { it.copy(totalResults = total, loadedResults = loadedCount, uiState = UiState.Success(item)) }
-                } else {
-                    _state.update { it.copy(uiState = UiState.Error("Failed to extract character")) }
-                }
-            }.onFailure { e ->
-                _state.update { it.copy(uiState = UiState.Error(e.message ?: "Unknown error")) }
-            }
-        }.onFailure { e ->
-            if (e.message?.contains("404") == true) {
-                _state.update { it.copy(totalResults = 0, uiState = UiState.Empty) }
+            val targetResponse = if (targetPage == 1) {
+                initialResponse
             } else {
-                _state.update { it.copy(uiState = UiState.Error(e.message ?: "Network Error")) }
+                repository.getCharacters(query, targetPage)
+            }
+
+            val loadedCount = targetResponse.results.size
+            val item = targetResponse.results.getOrNull(itemIndexInPage)
+
+            if (item != null) {
+                _state.update {
+                    it.copy(
+                        totalResults = total,
+                        loadedResults = loadedCount,
+                        uiState = UiState.Success(item)
+                    )
+                }
+            } else {
+                _state.update { it.copy(uiState = UiState.Error("Failed to extract character")) }
+            }
+        } catch (e: Exception) {
+            if ((e is HttpException && e.code() == 404) || e.message?.contains("404") == true) {
+                _state.update { it.copy(totalResults = 0, loadedResults = 0, uiState = UiState.Empty) }
+            } else {
+                _state.update { it.copy(uiState = UiState.Error(e.message ?: "Network or API Error")) }
             }
         }
     }
 
     private suspend fun fetchRandomEpisode(query: String) {
-        val initialRes = repository.getEpisodes(query, 1)
-        initialRes.onSuccess { response ->
-            val total = response.info.count
-            if (total == 0) {
-                _state.update { it.copy(totalResults = 0, uiState = UiState.Empty) }
-                return@onSuccess
+        try {
+            val initialResponse = repository.getEpisodes(query, 1)
+            val total = initialResponse.info.count
+            if (total == 0 || initialResponse.results.isEmpty()) {
+                _state.update { it.copy(totalResults = 0, loadedResults = 0, uiState = UiState.Empty) }
+                return
             }
-            
+
             val randomIndex = Random.nextInt(total)
             val targetPage = (randomIndex / 20) + 1
             val itemIndexInPage = randomIndex % 20
 
-            val targetRes = if (targetPage == 1) initialRes else repository.getEpisodes(query, targetPage)
-            
-            targetRes.onSuccess { targetResponse ->
-                val item = targetResponse.results.getOrNull(itemIndexInPage)
-                val loadedCount = targetResponse.results.size
-                if (item != null) {
-                    _state.update { it.copy(totalResults = total, loadedResults = loadedCount, uiState = UiState.Success(item)) }
-                } else {
-                    _state.update { it.copy(uiState = UiState.Error("Failed to extract episode")) }
-                }
-            }.onFailure { e ->
-                _state.update { it.copy(uiState = UiState.Error(e.message ?: "Unknown error")) }
-            }
-        }.onFailure { e ->
-            if (e.message?.contains("404") == true) {
-                _state.update { it.copy(totalResults = 0, uiState = UiState.Empty) }
+            val targetResponse = if (targetPage == 1) {
+                initialResponse
             } else {
-                _state.update { it.copy(uiState = UiState.Error(e.message ?: "Network Error")) }
+                repository.getEpisodes(query, targetPage)
+            }
+
+            val loadedCount = targetResponse.results.size
+            val item = targetResponse.results.getOrNull(itemIndexInPage)
+
+            if (item != null) {
+                _state.update {
+                    it.copy(
+                        totalResults = total,
+                        loadedResults = loadedCount,
+                        uiState = UiState.Success(item)
+                    )
+                }
+            } else {
+                _state.update { it.copy(uiState = UiState.Error("Failed to extract episode")) }
+            }
+        } catch (e: Exception) {
+            if ((e is HttpException && e.code() == 404) || e.message?.contains("404") == true) {
+                _state.update { it.copy(totalResults = 0, loadedResults = 0, uiState = UiState.Empty) }
+            } else {
+                _state.update { it.copy(uiState = UiState.Error(e.message ?: "Network or API Error")) }
             }
         }
     }
 
     private suspend fun fetchRandomLocation(query: String) {
-        val initialRes = repository.getLocations(query, 1)
-        initialRes.onSuccess { response ->
-            val total = response.info.count
-            if (total == 0) {
-                _state.update { it.copy(totalResults = 0, uiState = UiState.Empty) }
-                return@onSuccess
+        try {
+            val initialResponse = repository.getLocations(query, 1)
+            val total = initialResponse.info.count
+            if (total == 0 || initialResponse.results.isEmpty()) {
+                _state.update { it.copy(totalResults = 0, loadedResults = 0, uiState = UiState.Empty) }
+                return
             }
-            
+
             val randomIndex = Random.nextInt(total)
             val targetPage = (randomIndex / 20) + 1
             val itemIndexInPage = randomIndex % 20
 
-            val targetRes = if (targetPage == 1) initialRes else repository.getLocations(query, targetPage)
-            
-            targetRes.onSuccess { targetResponse ->
-                val item = targetResponse.results.getOrNull(itemIndexInPage)
-                val loadedCount = targetResponse.results.size
-                if (item != null) {
-                    _state.update { it.copy(totalResults = total, loadedResults = loadedCount, uiState = UiState.Success(item)) }
-                } else {
-                    _state.update { it.copy(uiState = UiState.Error("Failed to extract location")) }
-                }
-            }.onFailure { e ->
-                _state.update { it.copy(uiState = UiState.Error(e.message ?: "Unknown error")) }
-            }
-        }.onFailure { e ->
-            if (e.message?.contains("404") == true) {
-                _state.update { it.copy(totalResults = 0, uiState = UiState.Empty) }
+            val targetResponse = if (targetPage == 1) {
+                initialResponse
             } else {
-                _state.update { it.copy(uiState = UiState.Error(e.message ?: "Network Error")) }
+                repository.getLocations(query, targetPage)
+            }
+
+            val loadedCount = targetResponse.results.size
+            val item = targetResponse.results.getOrNull(itemIndexInPage)
+
+            if (item != null) {
+                _state.update {
+                    it.copy(
+                        totalResults = total,
+                        loadedResults = loadedCount,
+                        uiState = UiState.Success(item)
+                    )
+                }
+            } else {
+                _state.update { it.copy(uiState = UiState.Error("Failed to extract location")) }
+            }
+        } catch (e: Exception) {
+            if ((e is HttpException && e.code() == 404) || e.message?.contains("404") == true) {
+                _state.update { it.copy(totalResults = 0, loadedResults = 0, uiState = UiState.Empty) }
+            } else {
+                _state.update { it.copy(uiState = UiState.Error(e.message ?: "Network or API Error")) }
             }
         }
     }
