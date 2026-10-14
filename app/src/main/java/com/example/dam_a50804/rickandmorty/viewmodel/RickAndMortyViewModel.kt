@@ -2,7 +2,6 @@ package com.example.dam_a50804.rickandmorty.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.dam_a50804.rickandmorty.model.CharacterDto
 import com.example.dam_a50804.rickandmorty.model.EpisodeDto
 import com.example.dam_a50804.rickandmorty.model.LocationDto
 import com.example.dam_a50804.rickandmorty.repository.RickAndMortyRepository

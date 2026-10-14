@@ -9,44 +9,35 @@ class RickAndMortyRepository {
     private val api = RetrofitClient.apiService
 
     suspend fun getCharacters(name: String, page: Int): Result<CharacterResponse> {
-        return try {
+        return runCatching {
             val response = api.getCharacters(name, page)
             if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null) Result.success(body) else Result.failure(Exception("Empty body"))
+                response.body() ?: throw Exception("Empty body")
             } else {
-                Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
+                throw Exception("Error ${response.code()}: ${response.message()}")
             }
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
 
     suspend fun getEpisodes(name: String, page: Int): Result<EpisodeResponse> {
-        return try {
+        return runCatching {
             val response = api.getEpisodes(name, page)
             if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null) Result.success(body) else Result.failure(Exception("Empty body"))
+                response.body() ?: throw Exception("Empty body")
             } else {
-                Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
+                throw Exception("Error ${response.code()}: ${response.message()}")
             }
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
 
     suspend fun getLocations(name: String, page: Int): Result<LocationResponse> {
-        return try {
+        return runCatching {
             val response = api.getLocations(name, page)
             if (response.isSuccessful) {
-                val body = response.body()
-                if (body != null) Result.success(body) else Result.failure(Exception("Empty body"))
+                response.body() ?: throw Exception("Empty body")
             } else {
-                Result.failure(Exception("Error ${response.code()}: ${response.message()}"))
+                throw Exception("Error ${response.code()}: ${response.message()}")
             }
-        } catch (e: Exception) {
-            Result.failure(e)
         }
     }
 }

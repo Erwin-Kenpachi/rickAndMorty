@@ -65,7 +65,7 @@ fun RickAndMortyScreen(modifier: Modifier = Modifier, viewModel: RickAndMortyVie
 
         Spacer(modifier = Modifier.height(24.dp))
         RollButton(
-            enabled = state.uiState is UiState.Success,
+            enabled = state.uiState !is UiState.Loading,
             onClick = { viewModel.rollRandomItem() }
         )
     }
@@ -94,7 +94,7 @@ fun CategorySelection(selectedCategory: Category, onCategorySelected: (Category)
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        Category.values().forEach { category ->
+        Category.entries.forEach { category ->
             if (selectedCategory == category) {
                 Button(onClick = { onCategorySelected(category) }) {
                     Text(category.name.lowercase().replaceFirstChar { it.uppercase() })
